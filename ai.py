@@ -34,7 +34,7 @@ class Filters(BaseModel):
     region: Optional[List[str]] = None
     item_type: Optional[List[str]] = None
     channel: Optional[List[str]] = None
-    date_range: Optional[Tuple[str, str]] = None
+    date: Optional[Tuple[str, str]] = None
 
 class Extrafilter(BaseModel):
     column: Optional[str] = None
@@ -93,9 +93,9 @@ def sql_builder ( db_result,table_name,data:dict):
                 for key in i.keys():
                     if select_part:
                         print("Im in SQL script")
-                        select_part += f" AND {key}("
+                        select_part += f" AND {key.value}("
                     else:
-                        select_part += f"{key}("
+                        select_part += f"{key.value}("
                     
                     if i[key] in column_mapping.keys():
                         select_part += f"{column_mapping[i[key]]})"
@@ -105,7 +105,7 @@ def sql_builder ( db_result,table_name,data:dict):
         if data["filters"]:
             filters = data["filters"]
             for filter in filters:
-                if filters[filter] and (filter in column_mapping.keys()):
+                if filters[filter]:
                     value = column_mapping[filter]
                     values = ", ".join(f"'{str(item)}'" for item in filters[filter])
                     where_part += f" AND {value} IN ({values})"
@@ -114,14 +114,14 @@ def sql_builder ( db_result,table_name,data:dict):
             for item in data["extra_filter"]:
                 if item["column"] in columns:
                     if item["op"] in ("IS NULL", "IS NOT NULL"):
-                        where_part += f" AND {item["column"]} {item["op"]}"
+                        where_part += f" AND {item["column"]} {item["op"].value}"
                     elif item["op"] in ("BETWEEN", "NOT BETWEEN"):
-                        where_part += f" AND {item["column"]} {item["op"]} '{item["value"][0]}' AND '{item["value"][1]}'"
+                        where_part += f" AND {item["column"]} {item["op"].value} '{item["value"][0]}' AND '{item["value"][1]}'"
                     elif item["op"] in ("IN", "NOT IN"):
                         values = ", ".join(f"'{v}'" for v in item["value"])
-                        where_part += f" AND {item["column"]} {item["op"]} ({values})"                        
+                        where_part += f" AND {item["column"]} {item["op"].value} ({values})"                        
                     else:
-                        where_part += f" AND {item["column"]} {item["op"]} '{item["value"]}'"
+                        where_part += f" AND {item["column"]} {item["op"].value} '{item["value"]}'"
         
         if data["group_by"]:
             for i in data["group_by"]:
@@ -133,8 +133,9 @@ def sql_builder ( db_result,table_name,data:dict):
                 else:
                      group_by_part += value
 
+        print(select_part)
         final_sql = f"""select {select_part} from {table_name}
-        {f"where {where_part}" if where_part else ''}
+        {f"{where_part}" if where_part else ''}
         {f"group by {group_by_part}" if group_by_part else ''}
         """
 

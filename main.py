@@ -10,7 +10,7 @@ from db import engine,get_db_session
 from charset_normalizer import from_bytes
 from model import DatabaseMetadata
 import uuid
-from infer_metadata import infer_and_store_metadata
+from infer_metadata import infer_and_store_metadata,infer_col_type
 import numpy as np
 from ai import query_generator
 app = FastAPI()
@@ -50,7 +50,17 @@ async def upload_file(
         df.columns = [normalize_columns(c) for c in df.columns]
         df = df.replace({np.nan: None})
         table_name = make_table_name("sales")
-        table = create_table_from_df(eng=engine,df=df,table_name=table_name)
+       
+        schema = {}
+        for col in df.columns:
+            ctype = infer_col_type(df[col], sample_size=1000)
+            schema[col] = ctype
+            if ctype == 'date':
+                df[col] = pd.to_datetime(df[col], errors="coerce")
+                df[col] = df[col].dt.date
+        print(schema)
+
+        table = create_table_from_df(eng=engine,schema=schema,table_name=table_name)
 
         insert_data(table=table,engine=engine,df=df,batch_size=1000)
 

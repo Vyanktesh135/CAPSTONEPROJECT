@@ -1,7 +1,7 @@
 import re
 import uuid
 import pandas as pd
-from sqlalchemy import MetaData, Table, Column, Text
+from sqlalchemy import MetaData, Table, Column, Text,Column, Text, Numeric,Date,Boolean
 from sqlalchemy.engine import Engine
 from infer_metadata import infer_col_type
 
@@ -19,12 +19,19 @@ def make_table_name(prefix:str = "dataset") -> str:
     return f"{prefix}_{uuid.uuid4().hex[:12]}"
 
 #Create Table
-def create_table_from_df(eng: Engine,table_name:str,df = pd.DataFrame) -> Table:
+def create_table_from_df(eng: Engine,table_name:str,schema:dict) -> Table:
+    print("engine dialect: ",eng.dialect.name)
+    print("engine url: ",eng.url)
     md = MetaData()
-
+    data_type_dict = {
+        "string": Text,
+        "boolean": Boolean,
+        "numeric": Numeric(14,4),
+        "date": Date
+    }
     cols = [Column("__id",Text,primary_key=True)]
-    for c in df.columns:
-        cols.append(Column(c,Text,nullable=True))
+    for key,value in schema.items():
+        cols.append(Column(key,data_type_dict[value],nullable=True))
     
     table = Table(table_name,md,*cols)
     md.create_all(eng)
@@ -33,6 +40,7 @@ def create_table_from_df(eng: Engine,table_name:str,df = pd.DataFrame) -> Table:
 
 #Insert Into Table
 def insert_data(engine: Engine, table: Table, df: pd.DataFrame,batch_size:int = 1000):
+    print("Data Insertion is started ..!")
     df2 = df.copy()
 
     df2["__id"] = [uuid.uuid4().hex[:12] for _ in range(len(df2))]

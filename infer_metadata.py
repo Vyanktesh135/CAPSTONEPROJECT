@@ -16,23 +16,30 @@ def infer_col_type(series: pd.Series, sample_size: int = 500) -> str:
     s = series.dropna()
     if len(s) == 0:
         return "string"
+
     s = s.head(sample_size)
 
-    # date check
-    parsed_date = pd.to_datetime(s, errors="coerce", infer_datetime_format=True)
-    if float(parsed_date.notna().mean()) >= 0.90:
-        return "date"
-
-    # numeric check
-    cleaned = s.map(_clean_numeric_str)
-    parsed_num = pd.to_numeric(cleaned, errors="coerce")
-    if float(parsed_num.notna().mean()) >= 0.95:
-        return "numeric"
-
-    # boolean-like (optional)
+    # normalize strings once
     low = s.astype(str).str.strip().str.lower()
+
+    # boolean check (before numeric)
     if float(low.isin({"true","false","yes","no","0","1","y","n"}).mean()) >= 0.95:
         return "boolean"
+
+    # numeric check
+    cleaned = low.map(_clean_numeric_str)
+    parsed_num = pd.to_numeric(cleaned, errors="coerce")
+    num_ratio = float(parsed_num.notna().mean())
+
+    if num_ratio >= 0.95:
+        return "numeric"
+
+    # date check (exclude pure numerics)
+    parsed_date = pd.to_datetime(low, errors="coerce")
+    date_ratio = float(parsed_date.notna().mean())
+
+    if date_ratio >= 0.90:
+        return "date"
 
     return "string"
 
@@ -190,11 +197,11 @@ def infer_and_store_metadata(db: Session, datasetid,file_name: str, table_name: 
     row_count = fetch_row_count(db, table_name)
     stats = {"row_count": row_count}
 
-    # date_col = column_mapping.get("date")
-    # if date_col:
-    #     min_d, max_d = fetch_min_max_date(db, table_name, date_col)
-    #     stats["min_date"] = min_d
-    #     stats["max_date"] = max_d
+    date_col = column_mapping.get("date")
+    if date_col:
+        min_d, max_d = fetch_min_max_date(db, table_name, date_col)
+        stats["min_date"] = min_d
+        stats["max_date"] = max_d
 
     # 5) distinct values for core dims (if found)
     distinct_values = {"regions": [], "item_types": [], "channels": []}
