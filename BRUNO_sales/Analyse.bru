@@ -1,0 +1,21 @@
+meta {
+  name: Analyse
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{base_url}}/api/analyse
+  body: multipartForm
+  auth: inherit
+}
+
+body:multipart-form {
+  query: what is the overall revenue for motorcycles in small dealsize in USA
+  table_name: sales_b2fcec705d0b
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

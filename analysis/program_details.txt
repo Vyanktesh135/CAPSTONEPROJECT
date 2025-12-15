@@ -1,0 +1,99 @@
+************************************************
+******************* Run
+************************************************
+pip install -r requiren.txt
+uvicon main:app --reload
+alembic init migrations
+
+# Change env.py
+# from models import Base
+# from config import settings
+
+# target_metadata = Base.metadata
+# config.set_main_option("sqlalchemy.url", str(settings.DATABASE_URL))
+ 
+alembic revision --autogenerate -m "add job boards table"
+alembic upgrade head
+alembic downgrade -1
+
+chmod 755 build.sh
+uvicorn main:app --reload
+
+************************************************
+******************* requirenment.txt
+************************************************
+fastapi[all]
+psycopg2-binary==2.9.11
+sqlalchemy
+pydantic==2.12.4 # Validation  
+pydantic-settings==2.12.0 # Configuration Settings
+alembic==1.17.2 # Migration Tool
+
+
+************************************************
+******************* render.yaml
+************************************************
+services:  # A Docker web service
+  - type: web
+    name: fastapi-example
+    runtime: python
+    plan: free
+    autoDeploy: false
+    buildCommand: ./build.sh
+    startCommand: uvicorn test:app --host 0.0.0.0 --port $PORT
+ 
+************************************************
+******************* build.sh
+************************************************
+#!/bin/bash
+set -e
+
+#backend
+pip install -r requirements.txt
+alembic upgrade head
+
+# #frontend
+# cd frontend
+# npm install
+# npm run build
+
+************************************************
+******************* React + Vite
+************************************************
+1. npx create-react-router@latest frontend
+2. npm run dev
+
+3. change two files -->
+	1. vite.config.ts
+	   add - 
+	   export default defineConfig({
+		server: {
+			proxy: {
+			  '/api' : {
+				target: 'http://localhost:8000',
+				changeOrigin : true,
+				secure: false,
+			  }
+			}
+		  },
+	  plugins: [tailwindcss(), reactRouter(), tsconfigPaths()],
+	});
+	2. react-router.config.ts
+		set ssr = False
+		
+		export default {
+		  // Config options...
+		  // Server-side render by default, to enable SPA mode set this to `false`
+		  ssr: false,
+		} satisfies Config;
+
+4. npm run build
+ --> change main.py from from main backend server add below code snippet
+	app.mount("/assets", StaticFiles(directory="frontend/build/client/assets"))
+
+5. Post build success - 
+	@app.get("/{full_path:path}")
+	async def catch_all(full_path: str):
+	  indexFilePath = os.path.join("frontend", "build", "client", "index.html")
+	  return FileResponse(path=indexFilePath, media_type="text/html")
+ 

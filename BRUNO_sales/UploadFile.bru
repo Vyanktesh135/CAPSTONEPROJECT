@@ -1,0 +1,20 @@
+meta {
+  name: UploadFile
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{base_url}}/api/upload
+  body: multipartForm
+  auth: inherit
+}
+
+body:multipart-form {
+  file: @file(C:\Users\vyanktesh.l\Documents\CapStoneProject\Daset\sales_data_sample.csv)
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

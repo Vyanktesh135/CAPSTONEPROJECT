@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "BRUNO_sales",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

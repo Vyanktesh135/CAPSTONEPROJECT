@@ -1,0 +1,360 @@
+{
+  "stats": {
+    "row_count": 2823
+  },
+  "status": "ready",
+                            //    profile_df
+  "columns": [
+    {
+      "name": "__id",
+      "type": "string",
+      "top_values": [
+        "9175430bee7e",
+        "053ceedb3771",
+        "b304201e9eb6",
+        "b1d08f88657a",
+        "edadef2047a6",
+        "f264b08ff289",
+        "08d71c9d38e6",
+        "c981f7c7a341",
+        "2814b19cfe6b",
+        "bec86d759ceb"
+      ],
+      "distinct_count": 2000
+    },
+    {
+      "name": "addressline1",
+      "type": "string",
+      "top_values": [
+        "C/ Moralzarzal, 86",
+        "5677 Strong St.",
+        "201 Miller Street",
+        "Fauntleroy Circus",
+        "4092 Furth Circle",
+        "636 St Kilda Road",
+        "7734 Strong St.",
+        "897 Long Airport Avenue",
+        "2304 Long Airport Avenue",
+        "Geislweg 14"
+      ],
+      "distinct_count": 92
+    },
+    {
+      "name": "addressline2",
+      "type": "string",
+      "top_values": [
+        "Level 15",
+        "Level 3",
+        "Suite 400",
+        "Level 6",
+        "2nd Floor",
+        "Suite 101",
+        "Suite 750",
+        "Floor No. 4",
+        "Suite 200"
+      ],
+      "distinct_count": 9
+    },
+    {
+      "name": "city",
+      "type": "string",
+      "top_values": [
+        "Madrid",
+        "San Rafael",
+        "NYC",
+        "Singapore",
+        "San Francisco",
+        "Paris",
+        "North Sydney",
+        "Manchester",
+        "Melbourne",
+        "New Bedford"
+      ],
+      "distinct_count": 73
+    },
+    {
+      "name": "contactfirstname",
+      "type": "string",
+      "top_values": [
+        "Valarie",
+        "Diego",
+        "Julie",
+        "Sue",
+        "Michael",
+        "Victoria",
+        "Anna",
+        "Peter",
+        "Jeff",
+        "Maria"
+      ],
+      "distinct_count": 72
+    },
+    {
+      "name": "contactlastname",
+      "type": "string",
+      "top_values": [
+        "Freyre",
+        "Nelson",
+        "Young",
+        "Brown",
+        "Yu",
+        "Frick",
+        "Hernandez",
+        "King",
+        "O'Hara",
+        "Ashworth"
+      ],
+      "distinct_count": 77
+    },
+    {
+      "name": "country",
+      "type": "string",
+      "top_values": [
+        "USA",
+        "Spain",
+        "France",
+        "Australia",
+        "UK",
+        "Italy",
+        "Norway",
+        "Finland",
+        "Singapore",
+        "Germany"
+      ],
+      "distinct_count": 19
+    },
+    {
+      "name": "customername",
+      "type": "string",
+      "top_values": [
+        "Euro Shopping Channel",
+        "Mini Gifts Distributors Ltd.",
+        "Anna's Decorations, Ltd",
+        "AV Stores, Co.",
+        "Muscle Machine Inc",
+        "Australian Collectors, Co.",
+        "Corporate Gift Ideas Co.",
+        "Land of Toys Inc.",
+        "Online Diecast Creations Co.",
+        "Salzburg Collectables"
+      ],
+      "distinct_count": 92
+    },
+    {
+      "name": "dealsize",
+      "type": "string",
+      "top_values": [
+        "Medium",
+        "Small",
+        "Large"
+      ],
+      "distinct_count": 3
+    },
+    {
+      "max": 12,
+      "min": 1,
+      "name": "month_id",
+      "type": "numeric",
+      "distinct_count": 12
+    },
+    {
+      "max": 214,
+      "min": 33,
+      "name": "msrp",
+      "type": "numeric",
+      "distinct_count": 66
+    },
+    {
+      "max": "2005-05-31",
+      "min": "2003-01-06",
+      "name": "orderdate",
+      "type": "date",
+      "distinct_count": 245
+    },
+    {
+      "max": 18,
+      "min": 1,
+      "name": "orderlinenumber",
+      "type": "numeric",
+      "distinct_count": 18
+    },
+    {
+      "max": 10425,
+      "min": 10100,
+      "name": "ordernumber",
+      "type": "numeric",
+      "distinct_count": 294
+    },
+    {
+      "name": "phone",
+      "type": "string",
+      "top_values": [
+        "(91) 555 94 44",
+        "4155551450",
+        "02 9936 8555",
+        "(171) 555-1555",
+        "2125557413",
+        "03 9520 4555",
+        "6175558555",
+        "6505551386",
+        "2125557818",
+        "6035558647"
+      ],
+      "distinct_count": 91
+    },
+    {
+      "name": "postalcode",
+      "type": "string",
+      "top_values": [
+        "28034",
+        "97562",
+        "10022",
+        "94217",
+        "2060",
+        "EC2 5NT",
+        "3004",
+        "50553",
+        "71270",
+        "44000"
+      ],
+      "distinct_count": 73
+    },
+    {
+      "max": 100,
+      "min": 26.88,
+      "name": "priceeach",
+      "type": "numeric",
+      "distinct_count": 682
+    },
+    {
+      "name": "productcode",
+      "type": "string",
+      "top_values": [
+        "S18_3232",
+        "S10_1949",
+        "S12_1666",
+        "S18_2432",
+        "S18_1097",
+        "S10_4962",
+        "S24_1444",
+        "S24_2840",
+        "S18_1984",
+        "S18_2238"
+      ],
+      "distinct_count": 78
+    },
+    {
+      "name": "productline",
+      "type": "string",
+      "top_values": [
+        "Classic Cars",
+        "Vintage Cars",
+        "Motorcycles",
+        "Trucks and Buses",
+        "Planes",
+        "Ships",
+        "Trains"
+      ],
+      "distinct_count": 7
+    },
+    {
+      "max": 4,
+      "min": 1,
+      "name": "qtr_id",
+      "type": "numeric",
+      "distinct_count": 4
+    },
+    {
+      "max": 97,
+      "min": 6,
+      "name": "quantityordered",
+      "type": "numeric",
+      "distinct_count": 53
+    },
+    {
+      "max": 14082.8,
+      "min": 541.14,
+      "name": "sales",
+      "type": "numeric",
+      "distinct_count": 1965
+    },
+    {
+      "name": "state",
+      "type": "string",
+      "top_values": [
+        "CA",
+        "MA",
+        "NY",
+        "NSW",
+        "Victoria",
+        "PA",
+        "CT",
+        "NH",
+        "NV",
+        "BC"
+      ],
+      "distinct_count": 16
+    },
+    {
+      "name": "status",
+      "type": "string",
+      "top_values": [
+        "Shipped",
+        "Cancelled",
+        "In Process",
+        "On Hold",
+        "Resolved",
+        "Disputed"
+      ],
+      "distinct_count": 6
+    },
+    {
+      "name": "territory",
+      "type": "string",
+      "top_values": [
+        "EMEA",
+        "APAC",
+        "Japan"
+      ],
+      "distinct_count": 3
+    },
+    {
+      "max": "2005-01-01",
+      "min": "2003-01-01",
+      "name": "year_id",
+      "type": "date",
+      "distinct_count": 3
+    }
+  ],
+
+  
+  "version": 1,
+  "file_name": "sales_data_sample.csv",
+  "table_name": "sales_b2fcec705d0b",
+  "column_mapping": {
+    "date": "orderdate",
+    "region": "territory",
+    "channel": null,
+    "revenue": "sales",
+    "item_type": "productline",
+    "units_sold": "quantityordered",
+    "avg_selling_price": "priceeach"
+  },
+  "distinct_values": {
+    "regions": [
+      "APAC",
+      "Japan",
+      "EMEA"
+    ],
+    "channels": [],
+    "item_types": [
+      "Motorcycles",
+      "Ships",
+      "Planes",
+      "Classic Cars",
+      "Trains",
+      "Trucks and Buses",
+      "Vintage Cars"
+    ]
+  }
+}

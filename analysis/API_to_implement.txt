@@ -1,0 +1,41 @@
+1. Upload CSV
+    a. Store in DB -
+        Normalize the column name and store in DB
+    b. Background Task(Infer schema and stored as metadata it will store file_name / table_name / metadata)
+        - Finalize the rule set to get conolical columns
+          {
+            "column_mapping": {
+                "region": "territory",
+                "item_type": "productline",
+                "channel": null,
+                "date": "orderdate",
+                "units_sold": "quantityordered",
+                "revenue": "sales"
+            },
+            "columns": [
+                {"name":"territory","type":"string"},
+                {"name":"orderdate","type":"date"},
+                {"name":"sales","type":"numeric"}
+            ],
+            "distinct_values": {
+                "regions": ["EMEA", "APAC", "Japan"],
+                "item_types": ["Classic Cars", "Planes"]
+            },
+            "stats": {
+                "row_count": 2823,
+                "min_date": "2003-01-06",
+                "max_date": "2005-05-31"
+            }
+            }
+    ** Metadata_table Schema**
+    - id (UUIUD)
+    - file_name
+    - Table name
+    - table_metadata
+    - JSON
+
+
+
+2. Use existing one
+    return the table name on which we are going to perform the operations
+

@@ -1,0 +1,34 @@
+- Loading Dataset 
+- User will provide analytical queries system should be able answer those question
+- FrontEnd with Search box for analytical queries
+- Backend will get the queries and analyse it and answer back its kinda proper RAG application
+
+
+*********************************************************************************************
+*** APPROACHES
+*********************************************************************************************
+
+Let me know below approachis suiting best?
+Front End - 
+    First Component - chat window provide two options -
+        a. Use previous active datasets
+        b. Upload new dataset
+    * On right hand side show session details of last 10 chats   
+Back End -
+1. Load the dataset 
+2. Load in Postgres
+3. Extract the attribute needed for analysis using nlp
+4. Then using actual columns search in DB
+5. After getting result again use NLP to answer back
+6. I'm going to add one session in chat window so in future as well customer should be able to see details
+
+So for step 3(Attribute Extraction Agent),4(Tool to do analysis on DB and response back the result),5(Agent which will convert the result in NLP with respect to user query).
+
+As of now epicenter of problem is upload dataset and then do step 3,4,5 from backend once its done then implement the rest options
+
+
+*********************************************************************************************
+*** Explanation
+*********************************************************************************************
+A. "Agents are separated to ensure determinism in data retrieval and flexibility in explanation."
+B. "The system uses NLP only for intent extraction and explanation, while all data filtering and aggregation remains deterministic and SQL-driven, ensuring accuracy and explainability."
