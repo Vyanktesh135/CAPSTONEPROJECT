@@ -10,3 +10,6 @@ charset_normalizer
 langchain == 1.1.0
 langchain-openai == 1.1.0
 openai-agents == 0.6.2
+
+braintrust[openai-agents] == 0.3.12
+braintrust-langchain == 0.1.5

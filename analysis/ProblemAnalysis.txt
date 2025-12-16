@@ -32,3 +32,15 @@ As of now epicenter of problem is upload dataset and then do step 3,4,5 from bac
 *********************************************************************************************
 A. "Agents are separated to ensure determinism in data retrieval and flexibility in explanation."
 B. "The system uses NLP only for intent extraction and explanation, while all data filtering and aggregation remains deterministic and SQL-driven, ensuring accuracy and explainability."
+
+For our problem I want one orchestrator AI agent that will orchestrate to JSON query planner agent post that it will call the sql_builder tool which is depend on response of JSON query planner agent .
+The response of sql_builder will be provided to query validation agent and if query is wrong it will correct it give corrected query. Using this corrected query we will call final analytics_result_generator agent it will call sql_run_query tool internaly and convert the output in NLP and return to user 
+
+
+✅ Guardrails for “SQL-fixing agent”
+It may only output SELECT queries
+It may only reference one table: your table_name
+It may only use columns from column_catalog
+It must preserve parameter placeholders (no string interpolation)
+You must validate output SQL after the agent fixes it (mandatory)
+Even with guardrails, the safer approach is still: fix JSON plan, regenerate SQL.

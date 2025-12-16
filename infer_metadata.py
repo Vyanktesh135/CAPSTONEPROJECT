@@ -23,7 +23,7 @@ def infer_col_type(series: pd.Series, sample_size: int = 500) -> str:
     low = s.astype(str).str.strip().str.lower()
 
     # boolean check (before numeric)
-    if float(low.isin({"true","false","yes","no","0","1","y","n"}).mean()) >= 0.95:
+    if float(low.isin({"true","false","yes","no","y","n"}).mean()) >= 0.95:
         return "boolean"
 
     # numeric check

@@ -13,9 +13,15 @@ import uuid
 from infer_metadata import infer_and_store_metadata,infer_col_type
 import numpy as np
 from ai import query_generator
+from braintrust.wrappers.openai import BraintrustTracingProcessor
+from braintrust import init_logger,load_prompt
+from agents import set_default_openai_key,set_trace_processors
 app = FastAPI()
 
 @app.get("/")
+
+# set_trace_processors([BraintrustTracingProcessor(init_logger("Prodapt"),api_key=settings.)])
+# set_default_openai_key()
 async def home_page():
     return "Home Page"
 
@@ -33,6 +39,7 @@ async def upload_file(
     ):
     try:
         if not payload.file.filename.lower().endswith(".csv"):
+            print("Invalid File received : ",payload.file.filename)
             return JSONResponse(
                 content=({"error":"Only .csv file supported please provide the correct format"}),
                 status_code= status.HTTP_400_BAD_REQUEST
@@ -48,7 +55,7 @@ async def upload_file(
 
         #read file with above encoding
         df.columns = [normalize_columns(c) for c in df.columns]
-        df = df.replace({np.nan: None})
+        # df = df.where(pd.notna(df), None)
         table_name = make_table_name("sales")
        
         schema = {}
@@ -61,7 +68,9 @@ async def upload_file(
         print(schema)
 
         table = create_table_from_df(eng=engine,schema=schema,table_name=table_name)
-
+        
+        df = df.replace({pd.NaT: None, np.nan: None})
+        df = df.replace({"NaT": None, "nat": None, "None": None, "none": None, "nan": None, "NaN": None})
         insert_data(table=table,engine=engine,df=df,batch_size=1000)
 
         metadata = DatabaseMetadata(
@@ -90,10 +99,46 @@ async def upload_file(
     
     return JSONResponse(
     content= {
-        "message":"Data is loaded"
+        "message":"Data is loaded",
+        "table_name": table_name,
+        "file_name":  payload.file.filename
     },
     status_code=status.HTTP_200_OK
     )
+
+# ******************************************************
+# Upload File
+# ******************************************************
+@app.get('/api/getfiles')
+async def get_files():
+    try:
+        print("Getting Files")
+        db = get_db_session()
+        response = (
+            db.query(DatabaseMetadata.file_name,DatabaseMetadata.table_name)
+            .order_by(DatabaseMetadata.created_at.desc())
+            .limit(20)
+            .all()
+        )
+        data = []
+        for file_name, table_name in response:
+            temp = {}
+            temp["file_name"] = file_name
+            temp["table_name"] = table_name
+            data.append(temp)
+
+        print(data)
+        return data
+    except Exception as e:
+        print(e)
+        return JSONResponse(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            content=({"error":"Internal Server Error"})
+        )
+    finally:
+        if db:
+            db.close()
+            print("Session Closed")
 
 
 # ******************************************************

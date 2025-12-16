@@ -26,7 +26,7 @@ def create_table_from_df(eng: Engine,table_name:str,schema:dict) -> Table:
     data_type_dict = {
         "string": Text,
         "boolean": Boolean,
-        "numeric": Numeric(14,4),
+        "numeric": Numeric,
         "date": Date
     }
     cols = [Column("__id",Text,primary_key=True)]

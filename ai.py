@@ -7,6 +7,13 @@ from typing import Tuple,Optional,List,Union,Dict
 from model import DatabaseMetadata
 import json
 from enum import Enum
+from agents import function_tool
+from agents import Agent,Runner,SQLiteSession
+from braintrust import init_logger, load_prompt
+from braintrust.wrappers.openai import BraintrustTracingProcessor
+from db import get_db_session
+from sqlalchemy import text
+from sqlalchemy.orm import session
 
 class SQLOperator(str, Enum):
     eq = "="
@@ -77,6 +84,18 @@ class Answer(BaseModel):
 class ResultData(BaseModel):
     answer: Answer
 
+def run_sql(query:str,db:session = get_db_session()):
+    try:
+        for row in db.execute(text(query)).mappings():
+            print(row)
+    except Exception as e:
+        print("Failed to run query ",e)
+        raise Exception("Failed to run query ",e)
+    finally:
+        if db:
+            db.close()
+            print("Session is closed .")
+
 def sql_builder ( db_result,table_name,data:dict):
     try:
         print("Input Data:",data)
@@ -93,7 +112,7 @@ def sql_builder ( db_result,table_name,data:dict):
                 for key in i.keys():
                     if select_part:
                         print("Im in SQL script")
-                        select_part += f" AND {key.value}("
+                        select_part += f" , {key.value}("
                     else:
                         select_part += f"{key.value}("
                     
@@ -105,10 +124,16 @@ def sql_builder ( db_result,table_name,data:dict):
         if data["filters"]:
             filters = data["filters"]
             for filter in filters:
-                if filters[filter]:
+                if filters[filter] and filter != 'date':
                     value = column_mapping[filter]
                     values = ", ".join(f"'{str(item)}'" for item in filters[filter])
                     where_part += f" AND {value} IN ({values})"
+                
+                if filters[filter] and filter == 'date':
+                    value = column_mapping[filter]
+                    values = " AND ".join(f"'{str(item)}'" for item in filters[filter])
+                    where_part += f" AND {value} Between {values}"
+                
                 
         if data["extra_filter"]:
             for item in data["extra_filter"]:
@@ -134,19 +159,22 @@ def sql_builder ( db_result,table_name,data:dict):
                      group_by_part += value
 
         print(select_part)
+        if group_by_part:
+            select_part = group_by_part + "," + select_part
+        
         final_sql = f"""select {select_part} from {table_name}
         {f"{where_part}" if where_part else ''}
         {f"group by {group_by_part}" if group_by_part else ''}
         """
 
         final_sql.replace('None','null')
-        print(final_sql)
+        print("SQL Builder : ",final_sql)
 
+        run_sql(final_sql)
         return final_sql
     except Exception as e:
         print(e)
         raise Exception("Failed to generate the SQL",e)
-
 
 def query_generator(db,table_name,user_query):
     try:
@@ -179,7 +207,8 @@ def query_generator(db,table_name,user_query):
         - If time is missing, set date_range to null and add a note.
         8) Metrics allowed: revenue, units_sold, avg_selling_price or column from column_catalog alone.
         9) Group_by allowed: region, item_type, channel, date, quarter (only if date role exists) or column from column_catalog alone.
-
+        10) All date fields or entity in response must be in format like date_range [YYYY-01-01, YYYY-12-31] 
+            - if response contains year alone convert to ate_range [YYYY-01-01, YYYY-12-31]
         Your output MUST be valid JSON that conforms exactly to the provided schema.
         Do not include any text outside the JSON.
         """
@@ -239,4 +268,8 @@ def query_generator(db,table_name,user_query):
     except Exception as e:
         print("Failed while generating query : ",e)
         raise Exception("Failed while generating query : ",e)
+    finally:
+        if db:
+            db.close()
+            print("Session is closed.")
 
