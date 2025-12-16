@@ -11,101 +11,101 @@ export async function clientLoader(){
   console.log(response)
   const json_data = await response.json()
   console.log("Json Data ",json_data)
-  const temp_test = [
-    {
-      "file_name": "fact_sales.csv",
-      "table_name": "sales_75885eaab491"
-    },
-    {
-      "file_name": "synthatic_data.csv",
-      "table_name": "sales_91f186fe17ce"
-    },
-    {
-      "file_name": "sales_data_sample.csv",
-      "table_name": "sales_e0ceb4a5d914"
-    },
-    {
-      "file_name": "customer_data.csv",
-      "table_name": "customer_1a2b3c4d5e6f"
-    },
-    {
-      "file_name": "product_catalog.csv",
-      "table_name": "product_7g8h9i0j1k2l"
-    },
-    {
-      "file_name": "inventory.csv",
-      "table_name": "inventory_3m4n5o6p7q8r"
-    },
-    {
-      "file_name": "orders.csv",
-      "table_name": "orders_9s0t1u2v3w4x"
-    },
-    {
-      "file_name": "payments.csv",
-      "table_name": "payments_5y6z7a8b9c0d"
-    },
-    {
-      "file_name": "shipping_data.csv",
-      "table_name": "shipping_1e2f3g4h5i6j"
-    },
-    {
-      "file_name": "returns.csv",
-      "table_name": "returns_7k8l9m0n1o2p"
-    },
-    {
-      "file_name": "marketing_campaigns.csv",
-      "table_name": "marketing_3q4r5s6t7u8v"
-    },
-    {
-      "file_name": "website_traffic.csv",
-      "table_name": "traffic_9w0x1y2z3a4b"
-    },
-    {
-      "file_name": "email_subscribers.csv",
-      "table_name": "subscribers_5c6d7e8f9g0h"
-    },
-    {
-      "file_name": "feedback.csv",
-      "table_name": "feedback_1i2j3k4l5m6n"
-    },
-    {
-      "file_name": "sales_forecast.csv",
-      "table_name": "forecast_7o8p9q0r1s2t"
-    },
-    {
-      "file_name": "finance_summary.csv",
-      "table_name": "finance_3u4v5w6x7y8z"
-    },
-    {
-      "file_name": "employee_data.csv",
-      "table_name": "employee_9a0b1c2d3e4f"
-    },
-    {
-      "file_name": "supplier_data.csv",
-      "table_name": "supplier_5g6h7i8j9k0l"
-    },
-    {
-      "file_name": "logistics.csv",
-      "table_name": "logistics_1m2n3o4p5q6r"
-    },
-    {
-      "file_name": "budget.csv",
-      "table_name": "budget_7s8t9u0v1w2x"
-    },
-    {
-      "file_name": "audit_logs.csv",
-      "table_name": "audit_3y4z5a6b7c8d"
-    },
-    {
-      "file_name": "project_plan.csv",
-      "table_name": "project_9e0f1g2h3i4j"
-    },
-    {
-      "file_name": "meeting_notes.csv",
-      "table_name": "meetings_5k6l7m8n9o0p"
-    }
-  ]
-  return temp_test
+  // const temp_test = [
+  //   {
+  //     "file_name": "fact_sales.csv",
+  //     "table_name": "sales_75885eaab491"
+  //   },
+  //   {
+  //     "file_name": "synthatic_data.csv",
+  //     "table_name": "sales_91f186fe17ce"
+  //   },
+  //   {
+  //     "file_name": "sales_data_sample.csv",
+  //     "table_name": "sales_e0ceb4a5d914"
+  //   },
+  //   {
+  //     "file_name": "customer_data.csv",
+  //     "table_name": "customer_1a2b3c4d5e6f"
+  //   },
+  //   {
+  //     "file_name": "product_catalog.csv",
+  //     "table_name": "product_7g8h9i0j1k2l"
+  //   },
+  //   {
+  //     "file_name": "inventory.csv",
+  //     "table_name": "inventory_3m4n5o6p7q8r"
+  //   },
+  //   {
+  //     "file_name": "orders.csv",
+  //     "table_name": "orders_9s0t1u2v3w4x"
+  //   },
+  //   {
+  //     "file_name": "payments.csv",
+  //     "table_name": "payments_5y6z7a8b9c0d"
+  //   },
+  //   {
+  //     "file_name": "shipping_data.csv",
+  //     "table_name": "shipping_1e2f3g4h5i6j"
+  //   },
+  //   {
+  //     "file_name": "returns.csv",
+  //     "table_name": "returns_7k8l9m0n1o2p"
+  //   },
+  //   {
+  //     "file_name": "marketing_campaigns.csv",
+  //     "table_name": "marketing_3q4r5s6t7u8v"
+  //   },
+  //   {
+  //     "file_name": "website_traffic.csv",
+  //     "table_name": "traffic_9w0x1y2z3a4b"
+  //   },
+  //   {
+  //     "file_name": "email_subscribers.csv",
+  //     "table_name": "subscribers_5c6d7e8f9g0h"
+  //   },
+  //   {
+  //     "file_name": "feedback.csv",
+  //     "table_name": "feedback_1i2j3k4l5m6n"
+  //   },
+  //   {
+  //     "file_name": "sales_forecast.csv",
+  //     "table_name": "forecast_7o8p9q0r1s2t"
+  //   },
+  //   {
+  //     "file_name": "finance_summary.csv",
+  //     "table_name": "finance_3u4v5w6x7y8z"
+  //   },
+  //   {
+  //     "file_name": "employee_data.csv",
+  //     "table_name": "employee_9a0b1c2d3e4f"
+  //   },
+  //   {
+  //     "file_name": "supplier_data.csv",
+  //     "table_name": "supplier_5g6h7i8j9k0l"
+  //   },
+  //   {
+  //     "file_name": "logistics.csv",
+  //     "table_name": "logistics_1m2n3o4p5q6r"
+  //   },
+  //   {
+  //     "file_name": "budget.csv",
+  //     "table_name": "budget_7s8t9u0v1w2x"
+  //   },
+  //   {
+  //     "file_name": "audit_logs.csv",
+  //     "table_name": "audit_3y4z5a6b7c8d"
+  //   },
+  //   {
+  //     "file_name": "project_plan.csv",
+  //     "table_name": "project_9e0f1g2h3i4j"
+  //   },
+  //   {
+  //     "file_name": "meeting_notes.csv",
+  //     "table_name": "meetings_5k6l7m8n9o0p"
+  //   }
+  // ]
+  return json_data
 }
 
 export async function clientAction({request}:Route.ClientActionArgs){

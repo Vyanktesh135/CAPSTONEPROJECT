@@ -37,10 +37,37 @@ For our problem I want one orchestrator AI agent that will orchestrate to JSON q
 The response of sql_builder will be provided to query validation agent and if query is wrong it will correct it give corrected query. Using this corrected query we will call final analytics_result_generator agent it will call sql_run_query tool internaly and convert the output in NLP and return to user 
 
 
+Step 1 — Orchestrator ✅
+    Routes the request
+    Loads dataset metadata
+    Calls downstream steps
+
+Step 2 — JSON Builder ✅
+    Converts NL → JSON plan
+    Should output structured filters/metrics/group_by + notes
+    Uses metadata to avoid hallucinations
+
+Step 3 — Replace “SQL-fixing agent” with deterministic validation ✅✅
+    Do this instead:
+    Deterministic sql_builder (code) generates SQL from JSON
+    Deterministic sql_validator (code) checks:
+    only SELECT
+    uses allowed columns
+    date casts are safe
+    numeric casts are safe
+    If validation fails → call a Plan Repair Agent that fixes the JSON plan (not raw SQL)
+
+Step 4 — Analytics Result Generator ✅
+    Runs SQL (tool)
+    Converts rows to grounded explanation (agent)
+    This works reliably and still fits your architecture story.
+    If you want to keep Step 3 as an AI agent anyway
+    Then add hard guardrails, or it will bite you:
+
 ✅ Guardrails for “SQL-fixing agent”
-It may only output SELECT queries
-It may only reference one table: your table_name
-It may only use columns from column_catalog
-It must preserve parameter placeholders (no string interpolation)
-You must validate output SQL after the agent fixes it (mandatory)
-Even with guardrails, the safer approach is still: fix JSON plan, regenerate SQL.
+    It may only output SELECT queries
+    It may only reference one table: your table_name
+    It may only use columns from column_catalog
+    It must preserve parameter placeholders (no string interpolation)
+    You must validate output SQL after the agent fixes it (mandatory)
+    Even with guardrails, the safer approach is still: fix JSON plan, regenerate SQL.

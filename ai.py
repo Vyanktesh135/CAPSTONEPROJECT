@@ -73,12 +73,23 @@ class AggFunc(str,Enum):
     avg = "AVG"
     count = "COUNT"
     count_distinct = "COUNT_DISTINCT"
-    
+
+class OrderByAD(str,Enum):
+    asc = "ASC"
+    desc = "DESC"
+
+class OrderBy(BaseModel):
+    funtion: Optional[AggFunc] = None
+    column_name: str
+    order_by: OrderByAD
+
 class Answer(BaseModel):
     filters: Filters
     extra_filter: List[Extrafilter]
     metrics: List[Dict[AggFunc,str]]
     group_by: List[str]
+    order_by: List[OrderBy]
+    limit: int
     notes: List[str]
 
 class ResultData(BaseModel):
@@ -105,6 +116,8 @@ def sql_builder ( db_result,table_name,data:dict):
         select_part = ""
         where_part = "WHERE 1=1"
         group_by_part = ""
+        order_by_part = ""
+        limit = None
 
         if data["metrics"]:
             select_part = ""
@@ -133,8 +146,7 @@ def sql_builder ( db_result,table_name,data:dict):
                     value = column_mapping[filter]
                     values = " AND ".join(f"'{str(item)}'" for item in filters[filter])
                     where_part += f" AND {value} Between {values}"
-                
-                
+                                
         if data["extra_filter"]:
             for item in data["extra_filter"]:
                 if item["column"] in columns:
@@ -158,6 +170,21 @@ def sql_builder ( db_result,table_name,data:dict):
                 else:
                      group_by_part += value
 
+        if data["order_by"]:
+            for item in data["order_by"]:
+                column_name = column_mapping[item["column_name"]] if item["column_name"] in column_mapping.keys() else item["column_name"]
+                if item["funtion"]:
+                    function_name = f"{item["funtion"].value}("if item["funtion"] else ""
+                    column_name = function_name + column_name + ")"
+                
+                ob = item["order_by"].value
+                if order_by_part:
+                    order_by_part += f", {column_name} {ob}"
+                else:
+                    order_by_part += f"{column_name} {ob}"
+
+        if data["limit"]:
+            limit = data["limit"]  
         print(select_part)
         if group_by_part:
             select_part = group_by_part + "," + select_part
@@ -165,10 +192,12 @@ def sql_builder ( db_result,table_name,data:dict):
         final_sql = f"""select {select_part} from {table_name}
         {f"{where_part}" if where_part else ''}
         {f"group by {group_by_part}" if group_by_part else ''}
+        {f"order by {order_by_part}" if order_by_part else ''}
+        {f"limit {limit}" if limit else ''}
         """
 
         final_sql.replace('None','null')
-        print("SQL Builder : ",final_sql)
+        print("\n\nSQL Builder : ",final_sql,"\n\n")
 
         run_sql(final_sql)
         return final_sql
@@ -207,7 +236,13 @@ def query_generator(db,table_name,user_query):
         - If time is missing, set date_range to null and add a note.
         8) Metrics allowed: revenue, units_sold, avg_selling_price or column from column_catalog alone.
         9) Group_by allowed: region, item_type, channel, date, quarter (only if date role exists) or column from column_catalog alone.
-        10) All date fields or entity in response must be in format like date_range [YYYY-01-01, YYYY-12-31] 
+        10) Order by allowed:
+            a) region, item_type, channel, date, quarter (only if date role exists) or 
+            b) column from column_catalog alone or 
+            c) Aggregate function with region, item_type, channel, date, quarter (only if date role exists) or column from column_catalog alone.
+            order by format (if applicable Aggregate function name,column_name,Ascending (asc) / Descending(desc))
+        11) Limit should only contain numeric value.
+        12) All date fields or entity in response must be in format like date_range [YYYY-01-01, YYYY-12-31] 
             - if response contains year alone convert to ate_range [YYYY-01-01, YYYY-12-31]
         Your output MUST be valid JSON that conforms exactly to the provided schema.
         Do not include any text outside the JSON.
