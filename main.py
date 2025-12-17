@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi import UploadFile,File,Form,BackgroundTasks,status
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse,FileResponse
 from pydantic import BaseModel, Field
 from typing import Annotated
 import pandas as pd
@@ -16,6 +16,9 @@ from ai import orchestrator
 from braintrust.wrappers.openai import BraintrustTracingProcessor
 from braintrust import init_logger,load_prompt
 from agents import set_default_openai_key,set_trace_processors
+from fastapi.staticfiles import StaticFiles
+import os
+
 app = FastAPI()
 
 @app.get("/")
@@ -157,3 +160,9 @@ def answer(payload: Annotated[Query,Form()]):
         status_code=status.HTTP_200_OK,
         content=({"message": result})
     )
+
+app.mount("/assets",StaticFiles(directory="frontend/build/client/assets"))
+@app.get("/{full_path:path}")
+async def catch_all(full_path: str):
+  indexFilePath = os.path.join("frontend", "build", "client", "index.html")
+  return FileResponse(path=indexFilePath, media_type="text/html")
