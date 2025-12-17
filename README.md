@@ -11,23 +11,41 @@ The system identifies relevant data subsets, computes key metrics (units sold, r
 <img width="1361" height="315" alt="image" src="https://github.com/user-attachments/assets/f1ed0295-fb0d-4898-873c-7237dd351682" />
 
 **Requirenment**
+
+
 Python - 
+
+
 pip install -r requirement.txt
 
 React Router - 
+
 npm install -D tailwindcss postcss autoprefixer
+
 npm exec tailwindcss@3.4.17 init -p
+
 npx shadcn@latest init
+
 npx shadcn@latest add field
+
 npx shadcn@latest add input
+
 npx shadcn@latest add button
+
 npx shadcn@latest add popover 
 
 **How to run it**
+
 Backend Server -
+
 alembic upgrade head
+
 uvicon main:app --reload
 
+
 Frontend Server -
+
 cd frontend
+
 npm run dev
+
