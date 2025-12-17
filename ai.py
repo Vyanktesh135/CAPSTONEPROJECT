@@ -14,6 +14,9 @@ from braintrust.wrappers.openai import BraintrustTracingProcessor
 from db import get_db_session
 from sqlalchemy import text
 from sqlalchemy.orm import session
+from fastapi.encoders import jsonable_encoder
+
+llm = ChatOpenAI(model = "gpt-5.1",api_key=settings.OPENAI_API_KEY,temperature=0)
 
 class SQLOperator(str, Enum):
     eq = "="
@@ -95,10 +98,22 @@ class Answer(BaseModel):
 class ResultData(BaseModel):
     answer: Answer
 
+class c_violations(str,Enum):
+    rule: str
+    detail: str
+
+class SQL_Validator(BaseModel):
+    verdict: str
+    reason: str | None
+    violations: Optional[List[c_violations]] = None
+    suggested_fix: str | None
+
 def run_sql(query:str,db:session = get_db_session()):
     try:
+        data = []
         for row in db.execute(text(query)).mappings():
-            print(row)
+            data.append(row)
+        return data
     except Exception as e:
         print("Failed to run query ",e)
         raise Exception("Failed to run query ",e)
@@ -198,14 +213,12 @@ def sql_builder ( db_result,table_name,data:dict):
 
         final_sql.replace('None','null')
         print("\n\nSQL Builder : ",final_sql,"\n\n")
-
-        run_sql(final_sql)
         return final_sql
     except Exception as e:
         print(e)
         raise Exception("Failed to generate the SQL",e)
 
-def query_generator(db,table_name,user_query):
+def query_generator(table_name,user_query,db:session = get_db_session()):
     try:
         data = db.query(DatabaseMetadata).filter(DatabaseMetadata.table_name == table_name).first()
 
@@ -274,7 +287,6 @@ def query_generator(db,table_name,user_query):
         {format_instruction}
         """
 
-        llm = ChatOpenAI(model = "gpt-5.1",api_key=settings.OPENAI_API_KEY,temperature=0)
         analysis_parser = PydanticOutputParser(pydantic_object=ResultData)
         message = (
         ChatPromptTemplate.from_messages(
@@ -298,8 +310,8 @@ def query_generator(db,table_name,user_query):
 
         print(llm_response)
 
-        sql_builder(data=llm_response.model_dump()['answer'],db_result = result,table_name=table_name)
-        return llm_response.model_dump()
+        output_query = sql_builder(data=llm_response.model_dump()['answer'],db_result = result,table_name=table_name)
+        return { "llm_response":llm_response.model_dump(),"sql_query":output_query}
     except Exception as e:
         print("Failed while generating query : ",e)
         raise Exception("Failed while generating query : ",e)
@@ -308,3 +320,184 @@ def query_generator(db,table_name,user_query):
             db.close()
             print("Session is closed.")
 
+def query_validator(TABLE_NAME,COLUMN_CATALOG_JSON,SQL_QUERY):
+    try:
+        SYSTEM_PROMPT = """You are a SQL Safety & Correctness Validator for a Postgres analytics system.
+
+        Your task: validate a generated SQL query against strict rules and return a verdict.
+
+        Rules the SQL MUST satisfy:
+        1) It must be a single SELECT query only.
+        - Disallow: INSERT, UPDATE, DELETE, UPSERT, MERGE, DROP, ALTER, CREATE, TRUNCATE, GRANT, REVOKE, COPY, CALL, DO, EXECUTE, SET, WITH ... INSERT/UPDATE/DELETE, multiple statements separated by ';'.
+        2) It must reference exactly ONE table, and that table must be exactly the provided table_name.
+        - No other tables, schemas, views, CTEs that introduce other relations, joins, subqueries that read from other tables.
+        3) It may only use columns that appear in the provided column_catalog.
+        4) Date operations must be safe:
+        - If casting text to date, use "::date" or CAST(... AS date) only on allowed date columns.
+        - BETWEEN boundaries must use placeholders and explicit ::date casts are preferred.
+        5) Numeric operations must be safe:
+        - If casting text to numeric, use "::numeric" or CAST(... AS numeric) only on allowed numeric columns.
+        - Use NULLIF in division denominators to avoid division by zero.
+        6) The query must be syntactically plausible Postgres SQL.
+
+        You must return ONLY valid JSON, no markdown, no extra text.
+
+        If the query is correct:
+        - verdict = "correct"
+        - reasons should include a short confirmation.
+        - violations should be []
+        - suggested_fix must be null
+
+        If the query is wrong:
+        - verdict = "wrong"
+        - include clear reasons and violations
+        - suggested_fix: provide a corrected SELECT query only IF you can fix it without inventing columns/tables and while preserving placeholders. Otherwise set suggested_fix to null.
+        """
+
+        USER_PROMPT = """Validate the following SQL against the rules.
+
+        table_name: {TABLE_NAME}
+
+        column_catalog (allowed columns):
+        {COLUMN_CATALOG_JSON}
+
+        SQL to validate:
+        {SQL_QUERY}
+
+        {format_instruction}
+        """
+
+        analysis_parser = PydanticOutputParser(pydantic_object=SQL_Validator)
+        message = (
+            ChatPromptTemplate.from_messages([
+                ("system",SYSTEM_PROMPT),
+                ("user",USER_PROMPT)
+            ]).partial(format_instruction = analysis_parser.get_format_instructions())
+        )
+
+        chain = message | llm | analysis_parser
+
+        verdict_response: SQL_Validator = chain.invoke({
+            "TABLE_NAME":TABLE_NAME,
+            "COLUMN_CATALOG_JSON": COLUMN_CATALOG_JSON,
+            "SQL_QUERY": SQL_QUERY
+        })
+
+        print(verdict_response.model_dump_json())
+        return verdict_response
+    except Exception as e:
+        print("Failed to valiate ",e)
+        raise Exception("Failed to valiate ",e)
+
+def result_generator(query_generator_result,USER_QUESTION,QUERY_RESULT_ROWS):
+    try:
+        print("Generating the result ..")
+        SYSTEM_PROMPT = """You are an analytics result explanation assistant.
+        Your task:
+        - Explain the results of a data query to a business user.
+        - Use ONLY the provided query plan, executed SQL results, and notes.
+        - Do NOT invent numbers, trends, or interpretations beyond the data.
+        - Do NOT mention SQL, databases, tables, or implementation details.
+        - Keep the explanation clear, concise, and business-friendly.
+
+        Rules:
+        1) Use the user's original question as context for your explanation.
+        2) Base all statements strictly on the provided query result rows.
+        3) If the result is empty, clearly say that no matching data was found.
+        4) Clearly state which filters were applied.
+        5) If notes are provided (e.g., missing fields, ignored filters), surface them politely.
+        6) If metrics include multiple values, explain each briefly.
+        7) Do NOT speculate or infer causes unless explicitly supported by the data.
+
+        Output format:
+        - A short direct answer (1-3 sentences)
+        - A bullet list summarizing applied filters and metrics
+        - Optional notes (if any)
+
+        Return ONLY plain text. No JSON. No markdown.
+        """
+        
+        USER_PROMPT = """User Question:
+        "{USER_QUESTION}"
+
+        Query Plan (validated):
+        Filters:
+        - Region: {REGION_FILTER}
+        - Item Type: {ITEM_TYPE_FILTER}
+        - Channel: {CHANNEL_FILTER}
+        - Date Range: {DATE_RANGE}
+
+        Extra Filters:
+        {EXTRA_FILTERS_SUMMARY}
+
+        Metrics Requested:
+        {METRICS_LIST}
+
+        Group By:
+        {GROUP_BY_LIST}
+
+        Query Result Rows:
+        {QUERY_RESULT_ROWS}
+
+        Notes:
+        {NOTES_LIST}
+        """
+
+        message = (
+            ChatPromptTemplate([
+                ("system",SYSTEM_PROMPT),
+                ("human",USER_PROMPT)
+            ])
+        )
+
+        chain = message | llm
+
+        result = chain.invoke({
+            "USER_QUESTION":USER_QUESTION,
+            "REGION_FILTER":json.dumps(query_generator_result["filters"]["region"]),
+            "ITEM_TYPE_FILTER":json.dumps(query_generator_result["filters"]["item_type"]),
+            "CHANNEL_FILTER":json.dumps(query_generator_result["filters"]["channel"]),
+            "DATE_RANGE":json.dumps(query_generator_result["filters"]["date"]),
+            "EXTRA_FILTERS_SUMMARY":json.dumps(query_generator_result["extra_filter"]),
+            "METRICS_LIST":json.dumps(query_generator_result["metrics"]),
+            "GROUP_BY_LIST": json.dumps(query_generator_result["group_by"]),
+            "NOTES_LIST": json.dumps(query_generator_result["notes"]),
+            "QUERY_RESULT_ROWS": QUERY_RESULT_ROWS
+        })
+
+        print(result.model_dump_json())
+        return json.loads(result.model_dump_json())
+    except Exception as e:
+        print("Failed to generate the final answer ..!",e)
+        raise Exception("Failed to generate the final answer ..!",e)
+
+def orchestrator(table_name,user_query,db:session = get_db_session()):
+    try:
+        print(table_name,user_query)
+        generated_json = query_generator(table_name=table_name,user_query=user_query) 
+        
+        result = db.query(DatabaseMetadata.table_metadata).filter(DatabaseMetadata.table_name == table_name).first()
+        column_type_mapping = []
+        for table_metadata in result:
+            for i in table_metadata["columns"]:
+                column_type_mapping.append({"column_name":i["name"],"type":i["type"]})
+
+        sql_validation = query_validator(TABLE_NAME=table_name,COLUMN_CATALOG_JSON=json.dumps(column_type_mapping),SQL_QUERY=generated_json["sql_query"])
+
+        verdict = sql_validation.verdict.lower()
+        llm_nlp = None
+        if verdict == "correct":
+            final_result = run_sql(generated_json["sql_query"])
+            final_result = [dict(row) for row in final_result]
+            print("Result Generation Started ..")
+            llm_nlp = result_generator(query_generator_result = generated_json["llm_response"]["answer"],USER_QUESTION = user_query,QUERY_RESULT_ROWS = jsonable_encoder(final_result))
+            return llm_nlp["content"]
+        else:
+            # TODO
+            # call the SQL Fixing Agent
+            print("Hii")
+            return "Invalid Query Generated"
+        
+    except Exception as e:
+        print("Failed ..",e)
+        raise Exception("Failed to analyze",e)

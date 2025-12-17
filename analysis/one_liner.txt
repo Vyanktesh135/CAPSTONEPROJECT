@@ -1,0 +1,53 @@
+1. Upload & Ingestion
+
+“On upload, we normalize the CSV, store it in Postgres, and generate dataset metadata in the background.”
+
+“Metadata captures column types, roles, allowed values, and date boundaries so we never guess during queries.”
+
+2. Orchestration
+
+“A lightweight orchestrator controls the workflow and routes requests through planning, validation, execution, and explanation.”
+
+3. Query Planning
+
+“We convert natural language into a structured JSON query plan instead of raw SQL to avoid hallucinations.”
+
+“The planner is strictly grounded using dataset metadata and allowed values.”
+
+4. Validation
+
+“All SQL is generated deterministically and validated to ensure it’s read-only and schema-safe.”
+
+“If something is unsupported or ambiguous, the system explains it instead of guessing.”
+
+5. Execution
+
+“Queries are executed using parameterized SQL for safety and correctness.”
+
+6. Result Explanation
+
+“The response agent explains results using the validated query plan and executed data, not by re-analyzing SQL.”
+
+“Explanations are grounded and transparent, including applied filters and ignored conditions.”
+
+State Management
+“After each user action, we persist the session state so conversations remain contextual and reproducible.”
+“State tracks the dataset, last query plan, and execution results.”
+
+Design Philosophy
+
+“LLMs handle intent understanding; deterministic code handles data and math.”
+
+“Metadata is the source of truth across the system.”
+
+“Agents are optional; the workflow works reliably even without them.”
+
+Safety & Reliability
+
+“The system never invents columns, values, or metrics.”
+
+“Unsupported questions fail safely with clear user feedback.”
+
+Closing Line (strong demo ending)
+
+“This architecture delivers accurate analytics with natural language, without sacrificing safety or explainability.”

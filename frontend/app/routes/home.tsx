@@ -115,14 +115,42 @@ export async function clientAction({request}:Route.ClientActionArgs){
     body: form_data
     }
   )
-  const data = response.json()
+  const data = await response.json()
+  return { ok: true, message: data["message"] };
 }
 export default function Home({ loaderData }: any) {
   const [file_status, setFile_status] = useState(false);
   const [file_att,setFile_name] = useState({"file_name":"","table_name":""})
   const [searchParams] = useSearchParams();
   const fetcher = useFetcher();
-  const [query,setQuery] = useState("Type Some Message Here ..");
+  const [query,setQuery] = useState("");
+  const [answer, setAnswer] = useState("Messages will appear here.");
+  const [old_query,setHistory] = useState("")
+
+  function normalizeText(text: any) {
+  if (typeof text !== "string") return "";
+  return text.replace(/\\n/g, "\n");
+  }
+
+  function RenderFormattedText({ text }: { text: string }) {
+  const paragraphs = text.split("\n\n");
+
+    return (
+      <div className="space-y-4">
+        {paragraphs.map((para, i) => (
+          <p key={i} className="text-zinc-200 leading-relaxed">
+            {para.split("\n").map((line, j) => (
+              <span key={j}>
+                {line}
+                <br />
+              </span>
+            ))}
+          </p>
+        ))}
+      </div>
+    );
+  }
+
 
   useEffect(() => {
     const file_name = searchParams.get("file_name");
@@ -134,7 +162,17 @@ export default function Home({ loaderData }: any) {
     }
   }, [searchParams]);
 
+  useEffect(() => {
+    if (fetcher.data?.ok) {
+      const formatted = normalizeText(fetcher.data.message);
+      setAnswer(formatted);
+      console.log(answer)
+    }
+  }, [fetcher.data]);
+
   const triggerAction = () => {
+    if (!query.trim()) return;
+
     const data = new FormData();
     data.append("query", query);
     data.append("table_name",file_att.table_name)
@@ -143,15 +181,19 @@ export default function Home({ loaderData }: any) {
       method: "post",
       action: "/", // 
     });
+    setHistory(query)
     setQuery("")
   };
+
   console.log(file_att)
   console.log(file_status)
+  
   const select_file = async (table_name:any) => {
     setFile_status(true)
     setFile_name(table_name)
     console.log(file_att)
   }
+
   return (
     <div className="min-h-screen w-full bg-zinc-900 text-zinc-100">
       <div className="mx-auto flex h-[calc(100vh-4rem)] max-w-7xl gap-6 px-4 py-8 min-h-0">
@@ -166,18 +208,39 @@ export default function Home({ loaderData }: any) {
             </div>
 
             {/* Messages */}
-            <div className="flex-1 min-h-0 px-6 py-5">
-              <div className="h-full rounded-xl border border-dashed border-zinc-700/60 bg-zinc-900/30 p-4 text-sm text-zinc-400">
-                Messages will appear here.
+            <div className="flex-1 min-h-0 px-6 py-5 flex flex-col gap-4">
+              {/* Question bubble (right side) */}
+              {old_query && (
+                <div className="flex justify-end">
+                  <div className="max-w-[70%] rounded-2xl bg-indigo-500 px-4 py-2 text-sm text-white shadow">
+                    {old_query}
+                  </div>
+                </div>
+              )}
+
+              {/* Answer box (scrollable, left side) */}
+              <div className="flex-1 min-h-0">
+                <div className="h-full overflow-y-auto rounded-xl border border-dashed border-zinc-700/60 bg-zinc-900/30 p-4 text-sm text-zinc-200">
+                  <RenderFormattedText text={answer} />
+                </div>
               </div>
             </div>
+
+            {/*
+           <div className="flex-1 min-h-0 px-6 py-5">
+            <div className="h-full overflow-y-auto rounded-xl border border-dashed border-zinc-700/60 bg-zinc-900/30 p-4 text-sm text-zinc-400">
+              <RenderFormattedText text={answer} />
+            </div>
+          </div>
+          */}
 
             {/* Input */}
             <div className="shrink-0 border-t border-zinc-700/50 px-6 py-5">
               <div className="flex gap-3">
                 <input
                   className="h-11 flex-1 rounded-lg border border-zinc-700 bg-zinc-900 px-4 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-zinc-800"
-                  placeholder={`${query}`}
+                  placeholder='Type a message...'
+                  value={query}
                   id = "message"
                   onChange={(e)=>setQuery(e.target.value)}
                 />

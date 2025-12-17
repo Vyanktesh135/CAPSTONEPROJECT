@@ -12,7 +12,7 @@ from model import DatabaseMetadata
 import uuid
 from infer_metadata import infer_and_store_metadata,infer_col_type
 import numpy as np
-from ai import query_generator
+from ai import orchestrator
 from braintrust.wrappers.openai import BraintrustTracingProcessor
 from braintrust import init_logger,load_prompt
 from agents import set_default_openai_key,set_trace_processors
@@ -151,7 +151,8 @@ class Query(BaseModel):
 @app.post("/api/analyse")
 def answer(payload: Annotated[Query,Form()]):
     print(payload.query)
-    result =  query_generator(db=get_db_session(),table_name=payload.table_name,user_query=payload.query)
+    # result =  query_generator(db=get_db_session(),table_name=payload.table_name,user_query=payload.query)
+    result = orchestrator(table_name=payload.table_name,user_query=payload.query,db= get_db_session())
     return JSONResponse(
         status_code=status.HTTP_200_OK,
         content=({"message": result})
