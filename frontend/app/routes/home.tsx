@@ -201,7 +201,7 @@ export default function Home({ loaderData }: any) {
           <div className="flex w-[70%] flex-col rounded-2xl border border-zinc-700/50 bg-zinc-800 shadow-xl min-h-0">
             {/* Header */}
             <div className="shrink-0 border-b border-zinc-700/50 px-6 py-5">
-              <h1 className="text-lg font-semibold">Chat</h1>
+              <h1 className="text-lg font-semibold">Merch Lense</h1>
               <p className="mt-1 text-sm text-zinc-400">
                 <b>Ask questions about your <u><i>{file_att.file_name}</i></u> files.</b>
               </p>
