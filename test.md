@@ -225,17 +225,11 @@ Key orchestration steps (code-derived):
 
 | Component | Type | File / Job Script |
 |---|---|---|
-
 | tsel_mini_recon_01_batch_processing | Glue (Spark) | `Glue/tsel_mini_recon_01_batch_processing.py` |
-
 | tsel_mini_recon_01_batch_processing_brm | Glue (Spark) | `Glue/tsel_mini_recon_01_batch_processing_brm.py` |
-
 | tsel_mini_recon_01_inflight_trigger | Glue (Spark) | `Glue/tsel_mini_recon_01_inflight_trigger.py` |
-
 | tsel_mini_recon_01_batch_processing_injected | Glue (Spark) | `Glue/tsel_mini_recon_01_batch_processing_injected.py` |
-
 | tsel_mini_recon_01_batch_processing_inventory_py_shell | Glue (Python shell) | `Glue/tsel_mini_recon_01_batch_processing_inventory_py_shell.py` |
-
 | tsel_mini_recon_01_prefix_summary | Glue (Spark) | `Glue/tsel_mini_recon_01_prefix_summary.py` |
 
 
@@ -243,31 +237,18 @@ Key orchestration steps (code-derived):
 
 | Table | Purpose (code-derived) |
 |---|---|
-
 | `mini_recon_1.tbl_addon_count` | Cleared at job start on retry; populated by report functions |
-
 | `mini_recon_1.tbl_migratable_msisdn_count` | Cleared at job start on retry; populated by report functions |
-
 | `mini_recon_1.tbl_migratable_subscriber_status` | Cleared at job start on retry; populated by report functions |
-
 | `mini_recon_1.tbl_msisdn_prefix_count` | Cleared at job start on retry; populated by report functions |
-
 | `mini_recon_1.tbl_non_migratable_count` | Cleared at job start on retry; populated by report functions |
-
 | `mini_recon_1.tbl_payment_count` | Cleared at job start on retry; populated by report functions |
-
 | `mini_recon_1.tbl_promotion_count` | Cleared at job start on retry; populated by report functions |
-
 | `mini_recon_1.tbl_ucoin_balance_count` | Cleared at job start on retry; populated by report functions |
-
 | `mini_recon_1.tbl_pulsa_balance_sum` | Cleared at job start on retry; populated by report functions |
-
 | `mini_recon_1.tbl_user_app_login_count` | Cleared at job start on retry; populated by report functions |
-
 | `mini_recon_1.tbl_report_voucher_open_loyalty` | Cleared at job start on retry; populated by report functions |
-
 | `mini_recon_1.tbl_recon_report_prefix_summary` | Prefix-level consolidated summary |
-
 | `mini_recon_1.recon_status` | Status ledger (inserted with `active_status`) |
 
 
