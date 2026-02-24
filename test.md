@@ -16,6 +16,85 @@
 ## Module Overview
 
 ### Purpose
+### Mini Recon 1 – Business Purpose
+
+**Purpose:**  
+Mini Recon 1 validates that data received from source files has been accurately transformed before it is loaded into the Stage layer.
+
+It ensures:
+
+- Source data and Transformation tables are fully reconciled.
+- No data loss, duplication, or calculation errors occurred during transformation.
+- Only validated data proceeds to Stage Load.
+- If reconciliation fails, the process is stopped immediately to prevent incorrect data from entering downstream systems.
+
+**Business Value:**  
+Acts as the first quality gate, protecting the integrity of the data pipeline at the earliest stage.
+
+---
+
+### Mini Recon 2 – Business Purpose
+
+**Purpose:**  
+Mini Recon 2 verifies that data moved from the Transformation layer to the Stage layer remains complete and accurate.
+
+It ensures:
+
+- Transformation and Stage tables are fully reconciled.
+- Aggregations and record counts match expected results.
+- Any mismatches are identified and corrected before Target Load.
+- If discrepancies are detected, Stage data must be corrected before proceeding.
+
+**Business Value:**  
+Prevents incorrect or incomplete data from reaching business-facing target systems.
+
+---
+
+### Mini Recon 3 – Business Purpose
+
+**Purpose:**  
+Mini Recon 3 confirms that data loaded into the Target layer is fully consistent with the Stage layer.
+
+It ensures:
+
+- Stage and Target tables are reconciled.
+- Final data integrity is maintained.
+- The production dataset reflects the validated source data.
+
+**Business Value:**  
+Provides final assurance that the data available for reporting and decision-making is accurate and complete.
+
+---
+
+### Overall Reconciliation Summary – Business Purpose
+
+**Purpose:**  
+Provides end-to-end validation of the complete data journey from Source to Target after Recon 3 is completed.
+
+It ensures:
+
+- Full Source → Target reconciliation.
+- Confirmation that all reconciliation checkpoints have passed.
+- Confidence that the final dataset is audit-ready.
+
+**Business Value:**  
+Delivers executive-level assurance that reported data is trustworthy and traceable back to the source.
+
+---
+
+### ETL Stage Report – Business Purpose
+
+**Purpose:**  
+Generates a consolidated consistency report across Transformation, Stage, and Target layers after Target Load.
+
+It provides:
+
+- A summary of reconciliation results.
+- Visibility into mismatches and corrections.
+- A documented audit trail of data validation.
+
+**Business Value:**  
+Enhances transparency, governance, and compliance by providing clear evidence of data integrity across all ETL stages.
 
 The Recon Module enforces data control gates across the migration ETL, ensuring that records and key measures (counts, balances, statuses) remain consistent as data moves from Source → Transformation → Stage → Target. The module produces reconciliation detail tables and summary tables in Postgres schemas `mini_recon_1`, `mini_recon_2`, `mini_recon_3`, plus reporting tables for overall and ETL stage reporting.
 
