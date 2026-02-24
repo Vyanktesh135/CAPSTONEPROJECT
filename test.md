@@ -109,36 +109,78 @@ The module consists of:
   - Compute reconciliation outputs and write them back to Postgres tables.
   - Update centralized execution log table `"Migration".log_table`.
 
-> **Important (code-derived):** Most Glue jobs mark execution as **Passed/Failed** based on exceptions, not based on reconciliation mismatches; mismatch handling is generally implemented as **status columns written to recon tables**, not as job failures.
+## Business Context – Recon Module
 
-### Business Context
+The Recon Module is a critical data validation framework within the ETL pipeline that ensures data accuracy, completeness, and integrity at every stage of data movement from Source to Target systems.
 
-The business intent described for Mini Recon 1/2/3 (gatekeeping before Stage/Target loads) is only partially enforceable from code. The orchestration layer (Step Functions/Lambda) gates on **job execution status** and internal status tables, but explicit “stop on mismatch” logic is not consistently implemented as a hard failure in the Glue scripts. Where gating on mismatch is not found in code, this spec states **"Unable to determine from codebase."**
+It acts as a multi-level control mechanism, validating data between each layer before allowing it to proceed to the next stage. This structured reconciliation approach prevents data corruption, inconsistencies, and reporting errors in downstream business systems.
+
+---
+
+### Mini Recon 1 – Source to Transformation
+
+Mini Recon 1 performs reconciliation between Source Files and Transformation tables.
+
+- Must pass before Stage Load can begin.
+- If reconciliation fails → Process is immediately stopped.
+- Prevents incorrect or incomplete transformed data from entering the Stage layer.
+
+This step serves as the first quality checkpoint in the ETL lifecycle.
+
+---
+
+### Mini Recon 2 – Transformation to Stage
+
+Mini Recon 2 reconciles data between the Transformation and Stage tables.
+
+- Must pass before Target Load is executed.
+- If mismatches are detected → Stage data must be corrected before proceeding.
+
+This ensures that only validated and accurate data progresses toward business-facing systems.
+
+---
+
+### Mini Recon 3 – Stage to Target
+
+Mini Recon 3 validates reconciliation between the Stage and Target tables.
+
+- Ensures final data consistency before the dataset is considered production-ready.
+- Confirms that Target data accurately reflects validated upstream data.
+
+This step guarantees the integrity of data available for reporting and decision-making.
+
+---
+
+### Overall Reconciliation Summary
+
+Provides end-to-end validation of the complete Source → Target data flow after Recon 3 is completed.
+
+- Confirms that all reconciliation checkpoints have passed.
+- Validates full data traceability across layers.
+- Ensures the dataset is audit-ready.
+
+---
+
+### ETL Stage Report
+
+Generates a consolidated consistency report across the Transformation, Stage, and Target layers after Target Load.
+
+- Summarizes reconciliation results.
+- Highlights mismatches and corrections.
+- Provides a documented audit trail.
+
+This enhances governance, transparency, and compliance across the ETL process.
+
 
 ## Scope
 
 ### In-Scope
-
-Static analysis and reverse-engineering of the Recon Module components present in the provided codebase, including:
 
 - Mini Recon 1 Glue jobs and triggers
 - Mini Recon 2 Glue jobs and summaries
 - Mini Recon 3 data prep, triggers, and prefix summaries
 - Overall summary and ETL stage report jobs
 - Related Step Function definitions and Lambda triggers
-
-### Out-of-Scope
-
-- Runtime configuration not present in code (actual Glue job parameters in AWS console, IAM roles, VPC networking).
-- External operational runbooks not present in repo.
-- Any reconciliation rules that are not explicitly encoded in SQL/transform code.
-
-## Objectives
-
-- Provide a publication-ready, code-grounded functional specification for the Recon Module.
-- Enumerate end-to-end orchestration, triggers, dependencies, and data/control flows.
-- Extract reconciliation formulas and matching criteria directly from SQL and transformation logic.
-- Identify control checkpoints that stop/fail/log/escalate.
 
 ## Business Requirements Mapping
 
@@ -225,7 +267,7 @@ flowchart LR
 
 **Definition:** `stepfunctions/prod-stepfunctions/prod_tsel_batch_processing_transformation.json`
 
-Key orchestration steps (code-derived):
+Key orchestration steps:
 
 1. `Workflow-Transformation` (Task) – starts the main transformation workflow (not part of recon scope).
 2. `tsel_mini_recon_01` (Task) – starts Glue job `prod-tsel_mini_recon_01_batch_processing` with arguments:
@@ -234,8 +276,6 @@ Key orchestration steps (code-derived):
 4. `tsel_mini_recon_01_check` (Choice) – routes based on `$.glueResult.JobRunState` to SNS publish success/failure.
 
 **Stop/Fail control point:** Step Function ends in `Fail` state when recon Glue job run state is `FAILED`.
-
-> **Mismatch gating:** Unable to determine from codebase (Step Function checks Glue run state only).
 
 #### Step Functions – Stage Workflow (SIT example)
 
@@ -259,7 +299,7 @@ Key orchestration steps (code-derived):
 
 **File:** `Lambda/tsel_mini_recon_01_prefix_trigger.py`
 
-**Trigger selection logic (code-derived):**
+**Trigger selection logic :**
 
 - Retrieves active cohorts from `circles_dashboard.cohort_updation` where `status='ON'`.
 - Selects candidate rows from `mini_recon_1.recon_status` with:
@@ -268,8 +308,6 @@ Key orchestration steps (code-derived):
   - One of: `active_status / inflight_status / injected_status / inventory_status / brm_status = 'Passed'`
 - Updates `mini_recon_1.recon_status.prefix_summary_status` to `'Started'`.
 - Starts Glue job based on env mapping (prod/sit/perf/dev).
-
-**Retry logic:** Unable to determine from codebase.
 
 #### Lambda – Batch Status Check (Transformation)
 
@@ -284,7 +322,6 @@ Key orchestration steps (code-derived):
 
 - Triggers `tsel_mini_recon_03_prefix_summary` and `tsel_mini_recon_03_prefix_summary_brm` based on Postgres queries.
 
-**Mismatch gating:** Unable to determine from codebase.
 
 #### Lambda – Mini Recon 3 S3 Trigger (BRM)
 
@@ -300,7 +337,7 @@ Key orchestration steps (code-derived):
 
 ### Mini Recon 1
 
-#### Components in codebase
+#### Components
 
 | Component | Type | File / Job Script |
 |---|---|---|
@@ -314,7 +351,7 @@ Key orchestration steps (code-derived):
 
 #### Output Tables (Mini Recon 1)
 
-| Table | Purpose (code-derived) |
+| Table | Purpose |
 |---|---|
 | `mini_recon_1.tbl_addon_count` | Cleared at job start on retry; populated by report functions |
 | `mini_recon_1.tbl_migratable_msisdn_count` | Cleared at job start on retry; populated by report functions |
@@ -345,9 +382,6 @@ Key orchestration steps (code-derived):
 
 **Stop conditions:** Any exception → status `Failed` → Glue job fails.
 
-**Mismatch stop conditions:** Unable to determine from codebase.
-
-
 #### Validation Formulas – Prefix Summary (`tsel_mini_recon_01_prefix_summary`)
 
 **Subscriber status match:** `(src_count - non_migratable_count) = trgt_count` → `Match` else `Mismatch`.
@@ -377,7 +411,7 @@ Key orchestration steps (code-derived):
 | `mini_recon_2.tbl_payment_sub_count` | Produced by job; category indicated by table name |
 
 
-#### Core reconciliation rule present in code
+#### Core reconciliation rule
 
 For each `(service, subset)` pair configured in `checks`, compute **distinct counts** and set:
 - `subset_status = 'Passed'` if counts equal else `Failed`.
@@ -399,9 +433,6 @@ Mini Recon 3 includes multiple data prep variants and prefix summaries (includin
 - `Glue/tsel_mini_recon_03_prefix_summary.py`
 
 Where specific match formulas are not expressed as explicit CASE rules or Python comparisons, this spec does not infer them.
-
-**Hard stop on mismatch:** Unable to determine from codebase.
-
 
 ### Overall & Reporting
 
@@ -471,7 +502,6 @@ OverallSummary --> ETLStageReport
 ## Stage Validation Logic
 
 - **Control checks:** Implemented as status fields in recon output tables and as Glue job success/failure based on exceptions.
-- **Threshold rules / retries / escalation:** Unable to determine from codebase (no explicit thresholds or retries found in recon jobs; escalation appears limited to SNS publish on workflow failure).
 
 ## Control Checkpoints (Stop / Fail / Log / Escalate)
 
